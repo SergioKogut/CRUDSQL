@@ -14,7 +14,7 @@ namespace CRUDSQL
 
         public override string ToString()
         {
-            return $"{Id}\t{FullName}\t{Email}";
+            return $"\t{Id}\t{FullName}\t\t{Email}";
         }
 
     }

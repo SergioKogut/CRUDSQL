@@ -25,9 +25,6 @@ namespace CRUDSQL
 
             Console.ReadKey();
 
-
-
-
         }
     }
 }
