@@ -15,7 +15,7 @@ namespace CRUDSQL
         private Menu Menu1;
 
         // горизонтальне меню
-        private HorizontalMenu MenuSize;
+        //private HorizontalMenu MenuSize;
 
         // вертикальне меню
         private VerticalMenu MenuFind;
@@ -36,27 +36,50 @@ namespace CRUDSQL
             {
                 new ItemMenu(" Друк всіх", new GetMethod(Print)),
                 new ItemMenu(" Додати", new GetMethod(Add)),
-                new ItemMenu(" Видалити", new GetMethod(Print)),
+                new ItemMenu(" Видалити", new GetMethod(Delete)),
                 new ItemMenu(" Змінити", new GetMethod(Print)),
                 new ItemMenu(" Допомога", new GetMethod(Help)),
                 new ItemMenu(" Вихід", new GetMethod(Exit))
             });
 
             //MenuSize = new HorizontalMenu(10, 12, new List<string> { "", "3", "4", "5", "6" });
-            MenuFind = new VerticalMenu(10, 14, new List<string> { "по імені", "по прізвищу", "по батькові", "по email"});
+            MenuFind = new VerticalMenu(new List<string> { "по імені", "по прізвищу", "по батькові", "по email" });
         }
 
-        private List<UserViewModel> GetAllUsers(string select = "")
+
+        // 
+        private List<UserViewModel> GetAllUsers(int findBy = -1, string selectBy = "")
         {
 
             List<UserViewModel> users = new List<UserViewModel>();
+            string strQuery = "";
+            switch (findBy)
+            {
+                case -1:
+                    strQuery = "SELECT U.Id as UserId,U.LastName,U.FirstName,Surname,Email FROM Users as U";
+                    break;
+
+                case 0:
+                    strQuery = $"SELECT U.Id as UserId,U.LastName,U.FirstName,Surname,Email FROM Users as U WHERE FirstName = '{selectBy}'";
+                    break;
+                case 1:
+                    strQuery = $"SELECT U.Id as UserId,U.LastName,U.FirstName,Surname,Email FROM Users as U WHERE LastName = '{selectBy}'";
+                    break;
+                case 2:
+                    strQuery = $"SELECT U.Id as UserId,U.LastName,U.FirstName,Surname,Email FROM Users as U WHERE Surname = '{selectBy}'";
+                    break;
+                case 3:
+                    strQuery = $"SELECT U.Id as UserId,U.LastName,U.FirstName,Surname,Email FROM Users as U WHERE Email = '{selectBy}'";
+                    break;
 
 
-            //  string strCon1 = "Data Source=10.7.0.5;Initial Catalog=StudStep5;User ID=test;Password=123456qwerty";
-            //  string strCon = @"Data Source=DESKTOP-08C9EQ1$\SQLEXPRESS;Initial Catalog=Sergio;Integrated Security=True";
-            //string strCon1 = @"Data Source =.; Initial Catalog = Example1DB; Integrated Security = True; Connect Timeout = 30; Encrypt = False; TrustServerCertificate = False; ApplicationIntent = ReadWrite; MultiSubnetFailover = False";
-           // string strCon = @"Data Source = DESKTOP-08C9EQ1\SQLEXPRESS;Initial Catalog = Example1DB; Integrated Security = True;";
-            string strQuery = "SELECT U.Id as UserId,U.LastName,U.FirstName,Surname,Email FROM Users as U";
+                default:
+                    break;
+            }
+
+
+
+
             try
             {
                 using (SqlConnection conn = new SqlConnection(strCon))
@@ -87,9 +110,6 @@ namespace CRUDSQL
                         }
 
                     }
-
-
-
                 }
             }
             catch (Exception e)
@@ -101,9 +121,6 @@ namespace CRUDSQL
 
             return users;
         }
-
-
-
 
 
         // запуск програми
@@ -126,17 +143,18 @@ namespace CRUDSQL
             foreach (var user in users)
             {
                 Console.SetCursorPosition(25, i);
-
                 Console.WriteLine($"{i} {user}");
                 i++;
             }
-            
+
         }
 
+
+        // додаємо нового User
         private void Add()
         {
             Console.SetCursorPosition(0, 15);
-            
+
             UserCreateModel user = new UserCreateModel();
             Console.Write("Прізвище: ");
             user.LastName = Console.ReadLine();
@@ -149,14 +167,47 @@ namespace CRUDSQL
             Console.Write("Пароль: ");
             user.Password = Console.ReadLine();
             AddUser(user);
-            
             Console.Clear();
         }
 
+        private void Delete()
+        {
+            int number = MenuFind.Show(11, 3);
+            string[] text = { "імя", "прізвище", " по батькові", "email" };
+            string findBy = "Введіть " + text[number];
+            Console.SetCursorPosition(0, 10);
+
+            Console.Write($"{findBy}: ");
+            string word = Console.ReadLine();
+           
+            int i = 1;
+            var users = GetAllUsers(number, word);
+            Console.Clear();
+            Console.SetCursorPosition(25, 0);
+            Console.WriteLine("№      Id      Full name                       Email");
+            foreach (var user in users)
+            {
+                Console.SetCursorPosition(25, i);
+                Console.WriteLine($"{i} {user}");
+                i++;
+            }
+
+            int Id;
+            do
+            {
+                Console.SetCursorPosition(0, 12);
+                Console.Write("Введіть id User\n для видалення: ");
+            } while (!Int32.TryParse(Console.ReadLine(), out Id));
+
+            DelUser(Id);
+
+        }
+
+
+        // ! додаємого нового User в таблицю БД 
         private void AddUser(UserCreateModel user)
         {
 
-           // string strCon = "Data Source=10.7.0.5;Initial Catalog=StudStep5;User ID=test;Password=123456qwerty";
             string strQuery = "INSERT INTO Users (FirstName, LastName, Surname, Password, PasswordSalt, Email) " +
                 $"VALUES('{user.FirstName}','{user.LastName}','{user.Surname}', " +
                 $"'{user.Password}','{user.Password}','{user.Email}'); ";
@@ -178,9 +229,29 @@ namespace CRUDSQL
 
         }
 
+        private void DelUser(int UserId)
+        {
+            string strQuery = $"DELETE FROM Users WHERE Id='{UserId}';";
+            using (SqlConnection conn = new SqlConnection(strCon))
+            {
+                using (SqlCommand cmd = new SqlCommand(strQuery, conn))
+                {
+                    conn.Open();
+                    int row = cmd.ExecuteNonQuery();
+                    if (row == 0)
+                    {
+                        Console.WriteLine("---Помилка видалення користувача!---");
+                    }
 
-        //вихід з програми
-        private void Help()
+                }
+
+            }
+
+        }
+
+
+            //вихід з програми
+            private void Help()
         {
             Console.SetCursorPosition(0, 15);
             string text = "Ми вам допоможемо!";
@@ -197,6 +268,6 @@ namespace CRUDSQL
             ExitFlag = false;
         }
 
-        
+
     }
 }

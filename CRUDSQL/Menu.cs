@@ -106,8 +106,9 @@ namespace MenuSpace
             Console.Write(text);
         }
 
-        public int Show()
+        public int Show(int x=0, int y=0)
         {
+            PosXmenu = x; PosYmenu = y;
             do
             {
                 //друк меню
@@ -136,6 +137,17 @@ namespace MenuSpace
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine();
             return ActiveItem; // вертаємо значення горизонтального меню
+
+        }
+
+
+        public void Clear()
+        {
+            for (int i = 0; i < MenuItem.Capacity; i++)
+            {
+                Console.SetCursorPosition(PosXmenu, PosYmenu + i);
+                Console.WriteLine(new string(' ', MenuItem.Max().Length));
+            }
 
         }
     }
