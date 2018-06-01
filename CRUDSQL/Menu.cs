@@ -131,7 +131,6 @@ namespace MenuSpace
                 if (key.Key == ConsoleKey.UpArrow && ActiveItem > 0)
                     ActiveItem--;
 
-
             }//виході якщо нажати Ентер
             while (key.Key != ConsoleKey.Enter);
             Console.ForegroundColor = ConsoleColor.Green;
