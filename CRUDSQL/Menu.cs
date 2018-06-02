@@ -157,16 +157,30 @@ namespace MenuSpace
     */
 
 
-
     class Menu
     {
-
+        // активний пункт меню
         private int ActiveItem = 0;
-        private int PosXmenu = 10;
-        private int PosYmenu = 10;
 
+        // ліва позиція меню по Х 
+        private int PosXmenu = 10;
+
+        // ліва позиція меню по Y
+        private int PosYmenu = 10;
+        
+        // делегат 
         private GetMethod Method;
+
+        //список меню
         private List<Tuple<string, GetMethod>> MenuItem;
+
+        // колір активного меню
+        private ConsoleColor ActiveMenuColor = ConsoleColor.White;
+
+        // колір пасивного меню
+        private ConsoleColor PassiveMenuColor = ConsoleColor.Green;
+
+        //нажаття клавіши
         private ConsoleKeyInfo key;
 
         public Menu() { }
@@ -187,20 +201,20 @@ namespace MenuSpace
         {
             do
             {
-
                 //друк меню
                 for (int i = 0; i < MenuItem.Count; i++)
                 {
                     if (i == ActiveItem)
                     {
-                        SetColorText(PosXmenu, PosYmenu + i, MenuItem[i].Item1, ConsoleColor.Yellow);
+                        SetColorText(PosXmenu, PosYmenu + i, MenuItem[i].Item1, ActiveMenuColor);
                     }
                     else
                     {
-                        SetColorText(PosXmenu, PosYmenu + i, MenuItem[i].Item1, ConsoleColor.Green);
+                        SetColorText(PosXmenu, PosYmenu + i, MenuItem[i].Item1, PassiveMenuColor);
                     }
                 }
                 SetColorText(PosXmenu, PosYmenu - 1, "  МЕНЮ", ConsoleColor.Green);
+
                 //перевірка нажаття клавіш
                 key = Console.ReadKey();
                 if (key.Key == ConsoleKey.DownArrow && ActiveItem < MenuItem.Count - 1)
@@ -212,13 +226,15 @@ namespace MenuSpace
                     ActiveItem--;
                 }
 
-            }//вихді якщо нажади Ентер
+            }//вихі якщо нажади Ентер
             while (key.Key != ConsoleKey.Enter);
             // Console.Clear();
             Method = MenuItem[ActiveItem].Item2;
             Method.Invoke();
-        }//вихді якщо нажади Ентер
+        }
 
+
+        // добавлення нового пункту меню ззовні класу
         public void Add(Tuple<string, GetMethod> item)
         {
             MenuItem.Add(item);

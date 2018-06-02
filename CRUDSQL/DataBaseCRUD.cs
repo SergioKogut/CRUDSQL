@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Configuration;
 using IMenu = System.Collections.Generic.List<System.Tuple<string, GetMethod>>;
 using ItemMenu = System.Tuple<string, GetMethod>;
 using MenuSpace;
@@ -11,59 +12,60 @@ namespace CRUDSQL
     // клас підтримки роботи з базою данних
     class DataBaseCRUD
     {
-        // основне меню
+        // клас основне вертикальне меню з делегатами
         private Menu Menu1;
 
-        // горизонтальне меню
-        //private HorizontalMenu MenuSize;
-
-        // вертикальне меню
+        // вертикальне меню текстове
         private VerticalMenu MenuFind;
 
         // флаг виходу з програми
         private bool ExitFlag = true;
 
-        // стічка бази данних
-        private string strCon = @"Data Source = DESKTOP-08C9EQ1\SQLEXPRESS;Initial Catalog = Example1DB; Integrated Security = True;";
+        // !ЗМІНЕНО НА КОНФІГУРАТОР З КОНФІГУРАЦІЙНОГО ФАЙЛУ
+        // стічка адреси підключення до  бази данних
+        // private string strCon = @"Data Source = DESKTOP-08C9EQ1\SQLEXPRESS;Initial Catalog = Example1DB; Integrated Security = True;";
+
+            // підтягуємо з конфігураційного файлу
+        private string strCon = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
 
         //конструктор по замовчуванню
         public DataBaseCRUD()
         {
-
+            // створюємо допоміжне вертикальне меню
+            MenuFind = new VerticalMenu(new List<string> { "по імені", "по прізвищу", "по батькові", "по email" });
             //створюємо основне меню
             Menu1 = new Menu(1, 1, new IMenu
 
             {
-               // new ItemMenu(" Друк всіх", new GetMethod(Print)),
-                new ItemMenu(" Додати", new GetMethod(Add)),
-                new ItemMenu(" Видалити", new GetMethod(Delete)),
-                new ItemMenu(" Редагувати", new GetMethod(Update)),
-                new ItemMenu(" Знайти", new GetMethod(Find)),
-                new ItemMenu(" Допомога", new GetMethod(Help)),
-                new ItemMenu(" Вихід", new GetMethod(Exit))
+               //додаємо делегати на основні функції роботи з базою данних
+                new ItemMenu(" Додати", new GetMethod(Add)), //додати користувача
+                new ItemMenu(" Видалити", new GetMethod(Delete)), // видалити користувача
+                new ItemMenu(" Редагувати", new GetMethod(Update)), // редагувати користувача
+                new ItemMenu(" Знайти", new GetMethod(Find)), // пошук користувача
+                new ItemMenu(" Допомога", new GetMethod(Help)), // допомога
+                new ItemMenu(" Вихід", new GetMethod(Exit)) // вихід
             });
+            //друк таблиці
             Print();
-            //MenuSize = new HorizontalMenu(10, 12, new List<string> { "", "3", "4", "5", "6" });
-            MenuFind = new VerticalMenu(new List<string> { "по імені", "по прізвищу", "по батькові", "по email" });
+            
         }
 
         // запуск програми
         public void Run()
         {
             do
-            {
+            { // основний цикл
                 Menu1.Show();
 
             } while (ExitFlag);
         }
 
-        //друк всіх полів 
+        //друк всіх полів з бази даних
         private void Print()
         {
             var users = GetAllUsers();
             ShowUsers(users);
         }
-
 
         // додавання користувача в пункті головного меню
         private void Add()
@@ -77,20 +79,20 @@ namespace CRUDSQL
         // видалення користувача в пункті головного меню
         private void Delete()
         {
+            //викликаємо меню
             int number = MenuFind.Show(13, 2);
             string[] text = { "імя", "прізвище", " по батькові", "email" };
             string findBy = "Введіть " + text[number];
             Console.SetCursorPosition(0, 10);
-
             Console.Write($"{findBy}: ");
             string word = Console.ReadLine();
 
             var users = GetAllUsers(number, word);
 
+            // якщо кількість знайдених кристувачів не дорівню нулю
             if (users.Count != 0)
             {
                 ShowUsers(users);
-
                 int Id;
 
                 do
@@ -99,23 +101,21 @@ namespace CRUDSQL
                     Console.Write("Введіть id User\n для видалення: ");
                 } while (!Int32.TryParse(Console.ReadLine(), out Id));
 
-
+            // якщо введене Id не знайдене в виведеному списку  
                 if (users.Find(x => x.Id == Id) != null)
                 {
-                    // видалення 
+                    // видалення  по Id
                     DelUser(Id);
                     Message(0, 15, ConsoleColor.Red, "Користувача видалено!");
                 }
                 else
                 {
-                    // якщо введене Id користувача не співпадає з списком
                     Message(0, 15, ConsoleColor.Red, "Користувач з вказаним ID не підходить під параметри вашого пошуку!");
                 }
             }
             else
             {
                 // вивід  користувачів
-
                 Message(0, 15, ConsoleColor.Red, "Користувачів з такими параметрами в БД немає!");
             }
             Console.Clear();
@@ -192,7 +192,6 @@ namespace CRUDSQL
             }
             else
             {
-              
                 Message(0, 15, ConsoleColor.Red, "Користувачів з такими параметрами в БД немає!");
             }
             Console.ReadKey();
@@ -201,13 +200,27 @@ namespace CRUDSQL
             Print();
         }
 
+        //вихід з програми
+        private void Help()
+        {
+            Message(0, 15, ConsoleColor.DarkYellow, "Ми вам допоможемо,обовязково!");
+        }
+
+        //вихід з програми
+        private void Exit()
+        {
+            Console.SetCursorPosition(0, 15);
+            Message(0, 15, ConsoleColor.DarkYellow, "Дякую за користуванням програмою!");
+            ExitFlag = false;
+        }
+
         // показ списку користувачів
         void ShowUsers(List<UserViewModel> users)
         {
             int i = 1;
             Console.Clear();
             Console.SetCursorPosition(27, 0);
-            Console.WriteLine("№      Id      Full name                       Email");
+            Console.WriteLine("№    Id      Full name                       Email");
             foreach (var user in users)
             {
                 Console.SetCursorPosition(27, i);
@@ -265,7 +278,7 @@ namespace CRUDSQL
 
         }
 
-        // ! видаляємо  User з БД  по Id
+        // !SQL видаляємо  User з БД  по Id
         private void DelUser(int UserId)
         {
             string strQuery = $"DELETE FROM Users WHERE Id='{UserId}';";
@@ -284,6 +297,8 @@ namespace CRUDSQL
 
             }
         }
+
+        // !SQL редагуємо  User з БД  по Id
         private void UpdateUser(int UserId, UserCreateModel user)
         {
 
@@ -308,19 +323,7 @@ namespace CRUDSQL
 
        
 
-        //вихід з програми
-        private void Help()
-        {
-            Message(0, 15, ConsoleColor.Yellow, "Ми вам допоможемо");
-        }
-
-        //вихід з програми
-        private void Exit()
-        {
-            Console.SetCursorPosition(0, 15);
-            Message(0, 15, ConsoleColor.Yellow, "Дякую за користуванням програмою!");
-            ExitFlag = false;
-        }
+        
 
         // видає список користувачів по певному полю або всіх
         private List<UserViewModel> GetAllUsers(int findBy = -1, string selectBy = "")
